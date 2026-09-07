@@ -1,46 +1,35 @@
-# Astro Starter Kit: Basics
+# Laboratorio - 1
 
-```sh
-npm create astro@latest -- --template basics
+[Descripción breve: qué hace la app en 1-2 líneas]
+
+<!-- BADGE_CI -->
+
+## 🚀 Instalación local
+
+```bash
+git clone [url-de-tu-repositorio]
+cd [nombre-carpeta]
+npm install
 ```
 
-> 🧑‍🚀 **Seasoned astronaut?** Delete this file. Have fun!
+### Variables de entorno
 
-## 🚀 Project Structure
+Crea un archivo `.env` en la raíz con las siguientes claves (sin valores reales en este documento):
 
-Inside of your Astro project, you'll see the following folders and files:
-
-```text
-/
-├── public/
-│   └── favicon.svg
-├── src
-│   ├── assets
-│   │   └── astro.svg
-│   ├── components
-│   │   └── Welcome.astro
-│   ├── layouts
-│   │   └── Layout.astro
-│   └── pages
-│       └── index.astro
-└── package.json
+```
+DATABASE_URL=
+JWT_SECRET=
+PORT=
 ```
 
-To learn more about the folder structure of an Astro project, refer to [our guide on project structure](https://docs.astro.build/en/basics/project-structure/).
+## 📜 Comandos disponibles
 
-## 🧞 Commands
+| Comando         | Descripción                                            |
+| --------------- | ------------------------------------------------------ |
+| `npm run dev`   | Levanta el entorno de desarrollo                       |
+| `npm run build` | Genera el build de producción                          |
+| `npm test`      | Corre las pruebas automatizadas (pendiente — Sesión 3) |
 
-All commands are run from the root of the project, from a terminal:
+## 🗄️ Base de datos
 
-| Command                   | Action                                           |
-| :------------------------ | :----------------------------------------------- |
-| `npm install`             | Installs dependencies                            |
-| `npm run dev`             | Starts local dev server at `localhost:4321`      |
-| `npm run build`           | Build your production site to `./dist/`          |
-| `npm run preview`         | Preview your build locally, before deploying     |
-| `npm run astro ...`       | Run CLI commands like `astro add`, `astro check` |
-| `npm run astro -- --help` | Get help using the Astro CLI                     |
-
-## 👀 Want to learn more?
-
-Feel free to check [our documentation](https://docs.astro.build) or jump into our [Discord server](https://astro.build/chat).
+PostgreSQL con migraciones y seeds gestionados con Prisma (ver Módulo 2).
