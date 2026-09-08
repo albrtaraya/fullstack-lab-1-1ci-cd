@@ -3,7 +3,7 @@
 Sitio web construido con Astro que sirve de base para el Módulo IV: sobre este
 repositorio se monta el pipeline de integración continua de la Sesión 2.
 
-<!-- BADGE_CI -->
+[![CI](https://github.com/albrtaraya/fullstack-lab-1-1ci-cd/actions/workflows/ci.yml/badge.svg)](https://github.com/albrtaraya/fullstack-lab-1-1ci-cd/actions/workflows/ci.yml)
 
 ## 🚀 Instalación local
 
