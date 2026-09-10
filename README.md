@@ -32,7 +32,7 @@ PORT=
 | `npm run dev`     | Levanta el entorno de desarrollo en `localhost:4321`   |
 | `npm run build`   | Genera el build de producción en `dist/`               |
 | `npm run preview` | Sirve localmente el build de producción                |
-| `npm test`        | Corre las pruebas automatizadas (pendiente — Sesión 3) |
+| `npm test`        | Corre la suite de pruebas con Vitest                   |
 
 ## 🗄️ Base de datos
 

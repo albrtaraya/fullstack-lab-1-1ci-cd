@@ -1,4 +1,5 @@
 import express from 'express';
+import { esTituloValido, normalizarTitulo } from '../utils/validaciones.js';
 
 /**
  * API de tareas.
@@ -21,7 +22,11 @@ app.get('/tareas', (req, res) => {
 app.post('/tareas', (req, res) => {
 	const { titulo } = req.body ?? {};
 
-	const nuevaTarea = { id: siguienteId++, titulo, completada: false };
+	if (!esTituloValido(titulo)) {
+		return res.status(400).json({ error: 'El titulo es obligatorio' });
+	}
+
+	const nuevaTarea = { id: siguienteId++, titulo: normalizarTitulo(titulo), completada: false };
 	tareas.push(nuevaTarea);
 	res.status(201).json(nuevaTarea);
 });
