@@ -3,7 +3,7 @@
 Sitio web construido con Astro que sirve de base para el Módulo IV: sobre este
 repositorio se monta el pipeline de integración continua de la Sesión 2.
 
-<!-- BADGE_CI -->
+[![CI](https://github.com/albrtaraya/fullstack-lab-1-1ci-cd/actions/workflows/ci.yml/badge.svg)](https://github.com/albrtaraya/fullstack-lab-1-1ci-cd/actions/workflows/ci.yml)
 
 ## 🚀 Instalación local
 
@@ -32,7 +32,7 @@ PORT=
 | `npm run dev`     | Levanta el entorno de desarrollo en `localhost:4321`   |
 | `npm run build`   | Genera el build de producción en `dist/`               |
 | `npm run preview` | Sirve localmente el build de producción                |
-| `npm test`        | Corre las pruebas automatizadas (pendiente — Sesión 3) |
+| `npm test`        | Corre la suite de pruebas con Vitest                   |
 
 ## 🗄️ Base de datos
 
