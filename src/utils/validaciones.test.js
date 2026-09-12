@@ -43,7 +43,9 @@ describe('contarTareasPendientes', () => {
 	});
 
 	it('devuelve 0 cuando la lista está vacía', () => {
-		expect(contarTareasPendientes([])).toBe(0);
+		// CASO CULPABLE: aserción incorrecta a proposito (una lista vacía
+		// no puede tener 3 tareas pendientes).
+		expect(contarTareasPendientes([])).toBe(3);
 	});
 });
 
