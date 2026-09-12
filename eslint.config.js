@@ -4,7 +4,17 @@ import astro from 'eslint-plugin-astro';
 
 export default [
 	{
-		ignores: ['dist/**', '.astro/**', 'node_modules/**'],
+		// Carpetas generadas: build de Astro, tipos, dependencias y los reportes
+		// que producen Vitest y Playwright. Lintearlas solo genera ruido sobre
+		// código que nadie escribió a mano.
+		ignores: [
+			'dist/**',
+			'.astro/**',
+			'node_modules/**',
+			'coverage/**',
+			'playwright-report/**',
+			'test-results/**',
+		],
 	},
 	js.configs.recommended,
 	...astro.configs.recommended,
