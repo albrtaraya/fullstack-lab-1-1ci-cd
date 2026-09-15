@@ -1,0 +1,34 @@
+# Imagen del frontend en DOS etapas.
+#
+# Etapa 1 "build": necesita Node, npm y todo node_modules para compilar el sitio
+# de Astro — varios cientos de megabytes.
+# Etapa 2: el resultado de esa compilación (dist/) es solo HTML, CSS y
+# JavaScript estático, que no necesita Node para servirse. `COPY --from=build`
+# lleva únicamente esos archivos a una imagen de nginx mucho más liviana y
+# descarta todo lo demás.
+
+# ---------- Etapa 1: construir la aplicación ----------
+FROM node:22-alpine AS build
+
+WORKDIR /app
+
+COPY package*.json ./
+RUN npm ci
+
+COPY . .
+
+# URL de la API que el navegador va a llamar. Se inyecta en tiempo de build
+# porque Astro genera un sitio estático: la variable queda incrustada en el JS.
+ARG PUBLIC_API_URL=http://localhost:4000
+ENV PUBLIC_API_URL=$PUBLIC_API_URL
+
+RUN npm run build
+
+# ---------- Etapa 2: servir los archivos estáticos ----------
+FROM nginx:alpine
+
+COPY --from=build /app/dist /usr/share/nginx/html
+
+EXPOSE 80
+
+CMD ["nginx", "-g", "daemon off;"]

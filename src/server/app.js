@@ -1,34 +1,56 @@
 import express from 'express';
+import cors from 'cors';
 import { esTituloValido, normalizarTitulo } from '../utils/validaciones.js';
+import { crearRepositorio } from './repositorio.js';
 
 /**
  * API de tareas.
  *
  * La instancia de Express se exporta SIN llamar a `app.listen()`, para que
  * Supertest pueda levantarla en un puerto efímero durante las pruebas sin
- * ocupar un puerto real.
+ * ocupar un puerto real. El arranque real vive en `index.js`.
+ *
+ * El repositorio se resuelve solo: PostgreSQL si hay `DATABASE_URL`, y un
+ * almacén en memoria en caso contrario.
  */
-const app = express();
-app.use(express.json());
+export function crearApp(repositorio = crearRepositorio()) {
+	const app = express();
 
-/** Almacén en memoria. Suficiente para el alcance de este laboratorio. */
-const tareas = [];
-let siguienteId = 1;
+	// El frontend se sirve desde nginx en otro puerto (5173) y llama a esta API
+	// en el 4000, así que el navegador necesita CORS habilitado.
+	app.use(cors());
+	app.use(express.json());
 
-app.get('/tareas', (req, res) => {
-	res.status(200).json(tareas);
-});
+	app.locals.repositorio = repositorio;
 
-app.post('/tareas', (req, res) => {
-	const { titulo } = req.body ?? {};
+	/** Sonda de salud: la usa el healthcheck del contenedor. */
+	app.get('/salud', (req, res) => {
+		res.status(200).json({ estado: 'ok', almacen: repositorio.tipo });
+	});
 
-	if (!esTituloValido(titulo)) {
-		return res.status(400).json({ error: 'El titulo es obligatorio' });
-	}
+	app.get('/tareas', async (req, res, next) => {
+		try {
+			res.status(200).json(await repositorio.listar());
+		} catch (error) {
+			next(error);
+		}
+	});
 
-	const nuevaTarea = { id: siguienteId++, titulo: normalizarTitulo(titulo), completada: false };
-	tareas.push(nuevaTarea);
-	res.status(201).json(nuevaTarea);
-});
+	app.post('/tareas', async (req, res, next) => {
+		const { titulo } = req.body ?? {};
 
-export default app;
+		if (!esTituloValido(titulo)) {
+			return res.status(400).json({ error: 'El titulo es obligatorio' });
+		}
+
+		try {
+			res.status(201).json(await repositorio.crear(normalizarTitulo(titulo)));
+		} catch (error) {
+			next(error);
+		}
+	});
+
+	return app;
+}
+
+export default crearApp();
