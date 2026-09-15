@@ -1,0 +1,65 @@
+# Orquestación de los tres servicios del proyecto.
+#
+# Levanta la aplicación completa con un solo comando:
+#     docker compose up --build
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: always
+    environment:
+      POSTGRES_USER: appuser
+      POSTGRES_PASSWORD: apppass
+      POSTGRES_DB: appdb
+    ports:
+      # Se publica en 5434 y no en 5432 porque este equipo ya tiene ocupado el
+      # 5432 (el PostgreSQL del Módulo 2) y el 5433 (otro proyecto). Solo cambia
+      # el puerto visible desde el host: dentro de la red de Compose el servicio
+      # sigue escuchando en 5432, así que DATABASE_URL no se toca.
+      - '5434:5432'
+    volumes:
+      # El volumen conserva los datos entre reinicios de los contenedores.
+      # Solo `docker compose down -v` los borra.
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U appuser -d appdb']
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    restart: always
+    environment:
+      # El host es `postgres`, el nombre del servicio: dentro de la red de
+      # Compose cada servicio es alcanzable por su nombre. Nunca `localhost`,
+      # que dentro del contenedor apunta al propio contenedor.
+      DATABASE_URL: postgresql://appuser:apppass@postgres:5432/appdb
+      PORT: 4000
+    ports:
+      - '4000:4000'
+    depends_on:
+      postgres:
+        # Espera a que PostgreSQL esté realmente listo para aceptar
+        # conexiones, no solo a que el contenedor haya arrancado.
+        condition: service_healthy
+
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+      args:
+        # El navegador del usuario llama a la API desde fuera de la red de
+        # Compose, así que aquí sí corresponde localhost.
+        PUBLIC_API_URL: http://localhost:4000
+    restart: always
+    ports:
+      - '5173:80'
+    depends_on:
+      backend:
+        condition: service_healthy
+
+volumes:
+  postgres_data:
