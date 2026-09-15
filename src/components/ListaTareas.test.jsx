@@ -1,7 +1,82 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import ListaTareas from './ListaTareas';
+
+/** Respuesta HTTP mínima con la forma que usa el componente. */
+function respuesta(cuerpo, ok = true) {
+	return Promise.resolve({ ok, json: () => Promise.resolve(cuerpo) });
+}
+
+describe('ListaTareas conectada a la API', () => {
+	it('muestra las tareas que devuelve la API al montarse', async () => {
+		global.fetch = vi.fn(() => respuesta([{ id: 1, titulo: 'Desde PostgreSQL', completada: false }]));
+
+		render(<ListaTareas />);
+
+		expect(await screen.findByText('Desde PostgreSQL')).toBeInTheDocument();
+		expect(screen.getByText('1 tarea pendiente')).toBeInTheDocument();
+	});
+
+	it('guarda la tarea nueva en la API y muestra la fila que devuelve', async () => {
+		global.fetch = vi
+			.fn()
+			.mockImplementationOnce(() => respuesta([]))
+			.mockImplementationOnce(() => respuesta({ id: 42, titulo: 'Comprar pan', completada: false }));
+		render(<ListaTareas />);
+		const usuario = userEvent.setup();
+		// Espera a que termine la carga inicial y el componente pase a modo API.
+		await vi.waitFor(() => expect(global.fetch).toHaveBeenCalledTimes(1));
+
+		await usuario.type(screen.getByLabelText('Nueva tarea'), 'Comprar pan');
+		await usuario.click(screen.getByText('Agregar'));
+
+		expect(await screen.findByText('Comprar pan')).toBeInTheDocument();
+		const [url, opciones] = global.fetch.mock.calls[1];
+		expect(url).toMatch(/\/tareas$/);
+		expect(opciones.method).toBe('POST');
+		expect(JSON.parse(opciones.body)).toEqual({ titulo: 'Comprar pan' });
+	});
+
+	it('si la API rechaza el alta, la tarea se conserva en local', async () => {
+		global.fetch = vi
+			.fn()
+			.mockImplementationOnce(() => respuesta([]))
+			.mockImplementationOnce(() => respuesta({ error: 'fallo' }, false));
+		render(<ListaTareas />);
+		const usuario = userEvent.setup();
+		await vi.waitFor(() => expect(global.fetch).toHaveBeenCalledTimes(1));
+
+		await usuario.type(screen.getByLabelText('Nueva tarea'), 'Escribir el informe');
+		await usuario.click(screen.getByText('Agregar'));
+
+		expect(await screen.findByText('Escribir el informe')).toBeInTheDocument();
+	});
+
+	it('si la API se cae a mitad de sesion, la tarea se conserva en local', async () => {
+		global.fetch = vi
+			.fn()
+			.mockImplementationOnce(() => respuesta([]))
+			.mockImplementationOnce(() => Promise.reject(new Error('sin red')));
+		render(<ListaTareas />);
+		const usuario = userEvent.setup();
+		await vi.waitFor(() => expect(global.fetch).toHaveBeenCalledTimes(1));
+
+		await usuario.type(screen.getByLabelText('Nueva tarea'), 'Revisar el PR');
+		await usuario.click(screen.getByText('Agregar'));
+
+		expect(await screen.findByText('Revisar el PR')).toBeInTheDocument();
+	});
+
+	it('si la carga inicial responde con error, arranca vacia en modo local', async () => {
+		global.fetch = vi.fn(() => respuesta(null, false));
+
+		render(<ListaTareas />);
+
+		await vi.waitFor(() => expect(global.fetch).toHaveBeenCalledTimes(1));
+		expect(screen.getByText('0 tareas pendientes')).toBeInTheDocument();
+	});
+});
 
 describe('ListaTareas', () => {
 	it('arranca sin tareas pendientes', () => {

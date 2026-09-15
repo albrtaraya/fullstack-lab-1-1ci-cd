@@ -12,8 +12,16 @@ export default defineConfig({
 		coverage: {
 			provider: 'v8',
 			reporter: ['text', 'html'],
-			include: ['src/**/*.{js,jsx}', 'src/server/**/*.js'],
-			exclude: ['src/test/**', '**/*.test.{js,jsx}'],
+			include: ['src/**/*.{js,jsx}'],
+			exclude: [
+				'src/test/**',
+				'**/*.test.{js,jsx}',
+				// Punto de arranque del backend: solo lee variables de entorno,
+				// llama a listen() y registra los manejadores de apagado. No tiene
+				// lógica que valga la pena afirmar en una prueba, y ejecutarlo
+				// abriría un puerto real durante la suite.
+				'src/server/index.js',
+			],
 			// Sin este bloque, Vitest informa el porcentaje pero nunca falla.
 			// Con él, `vitest run --coverage` devuelve error si la cobertura baja
 			// del umbral, que es lo que convierte la cobertura en parte real del
