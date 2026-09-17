@@ -81,14 +81,16 @@ describe('repositorio en memoria', () => {
 describe('repositorio PostgreSQL', () => {
 	const URL = 'postgresql://appuser:apppass@postgres:5432/appdb';
 
-	it('crea la tabla al inicializar', async () => {
+	it('aplica las migraciones al inicializar', async () => {
 		consulta.mockResolvedValue({ rows: [] });
 		const repo = crearRepositorio(URL);
 
-		await repo.inicializar();
+		const resultado = await repo.inicializar();
 
-		expect(consulta).toHaveBeenCalledTimes(1);
-		expect(consulta.mock.calls[0][0]).toContain('CREATE TABLE IF NOT EXISTS tarea');
+		// El esquema ya no se define aquí: se delega en db/migraciones/.
+		const sentencias = consulta.mock.calls.map((c) => c[0]).join('\n');
+		expect(sentencias).toContain('CREATE TABLE IF NOT EXISTS migracion_aplicada');
+		expect(resultado.aplicadas).toContain('001_crear_tabla_tarea.sql');
 	});
 
 	it('lista las tareas ordenadas por id', async () => {
