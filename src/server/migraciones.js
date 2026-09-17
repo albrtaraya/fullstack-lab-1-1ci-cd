@@ -65,7 +65,7 @@ export async function aplicarMigraciones(pool, carpeta = CARPETA_MIGRACIONES) {
 			aplicadas.push(nombre);
 		} catch (error) {
 			await pool.query('ROLLBACK');
-			throw new Error(`Fallo la migracion ${nombre}: ${error.message}`);
+			throw new Error(`Fallo la migracion ${nombre}: ${error.message}`, { cause: error });
 		}
 	}
 
