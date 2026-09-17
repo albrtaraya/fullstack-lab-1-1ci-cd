@@ -23,6 +23,12 @@ jobs:
   pruebas:
     name: Pruebas unitarias y cobertura
     runs-on: ubuntu-latest
+    # Los secretos se inyectan como variables de entorno. Su valor real nunca
+    # aparece en este archivo —que es público— ni en el código: solo existe
+    # cifrado en la configuración del repositorio. Si por accidente llegara a
+    # imprimirse, Actions lo enmascara con asteriscos en el log.
+    env:
+      JWT_SECRET: ${{ secrets.JWT_SECRET }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -31,6 +37,61 @@ jobs:
           cache: 'npm'
       - run: npm ci
       - run: npx vitest run --coverage
+
+  migraciones:
+    name: Migraciones y Seeds
+    runs-on: ubuntu-latest
+    # PostgreSQL efímero: existe solo durante esta ejecución, en una máquina
+    # virtual descartable y aislada. Por eso sus credenciales son fijas y
+    # visibles: no es una base real ni alcanzable desde fuera. La base de
+    # verdad sí usa el secreto DATABASE_URL.
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: testuser
+          POSTGRES_PASSWORD: testpass
+          POSTGRES_DB: testdb
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      DATABASE_URL: postgresql://testuser:testpass@localhost:5432/testdb
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+      - run: npm ci
+
+      # Equivalente a `prisma migrate deploy`: este proyecto no usa Prisma, así
+      # que aplica los .sql versionados en db/migraciones/.
+      - name: Aplicar migraciones
+        run: npm run db:migrate
+
+      - name: Cargar datos de ejemplo
+        run: npm run db:seed
+
+      # La prueba de que el seed es reproducible: correrlo de nuevo no debe
+      # fallar por clave duplicada ni cambiar el número de filas.
+      - name: Repetir migraciones y seed (idempotencia)
+        run: |
+          npm run db:migrate
+          npm run db:seed
+
+      - name: Verificar que no se duplicaron filas
+        run: |
+          TOTAL=$(psql "$DATABASE_URL" -tAc "SELECT COUNT(*) FROM tarea")
+          echo "Filas en la tabla tarea tras dos seeds: $TOTAL"
+          if [ "$TOTAL" -ne 3 ]; then
+            echo "El seed duplico datos: se esperaban 3 filas y hay $TOTAL"
+            exit 1
+          fi
 
   e2e:
     name: Pruebas E2E

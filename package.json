@@ -11,6 +11,8 @@
     "preview": "astro preview",
     "lint": "eslint .",
     "test": "vitest run",
+    "db:migrate": "node src/server/cli.js migrate",
+    "db:seed": "node src/server/cli.js seed",
     "astro": "astro"
   },
   "dependencies": {

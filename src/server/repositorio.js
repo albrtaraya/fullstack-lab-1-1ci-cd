@@ -52,19 +52,16 @@ function crearRepositorioPostgres(urlConexion) {
 		tipo: 'postgres',
 
 		/**
-		 * Crea la tabla si no existe. El proyecto no usa Prisma, así que este es
-		 * el equivalente a `prisma migrate deploy` de la guía.
+		 * Aplica las migraciones pendientes al arrancar.
+		 *
+		 * El esquema ya no se define aquí: vive en los archivos .sql de
+		 * `db/migraciones/`, que son los que versiona Git y los que aplica el
+		 * pipeline. Este módulo solo los invoca.
 		 */
 		async inicializar() {
 			const pool = await obtenerPool();
-			await pool.query(`
-				CREATE TABLE IF NOT EXISTS tarea (
-					id SERIAL PRIMARY KEY,
-					titulo TEXT NOT NULL,
-					completada BOOLEAN NOT NULL DEFAULT FALSE,
-					creada_en TIMESTAMPTZ NOT NULL DEFAULT NOW()
-				)
-			`);
+			const { aplicarMigraciones } = await import('./migraciones.js');
+			return aplicarMigraciones(pool);
 		},
 
 		async listar() {

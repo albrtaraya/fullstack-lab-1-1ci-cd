@@ -1,0 +1,7 @@
+-- Tabla principal de tareas.
+CREATE TABLE IF NOT EXISTS tarea (
+	id SERIAL PRIMARY KEY,
+	titulo TEXT NOT NULL,
+	completada BOOLEAN NOT NULL DEFAULT FALSE,
+	creada_en TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
