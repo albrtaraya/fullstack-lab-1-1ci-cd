@@ -1,6 +1,6 @@
 import express from 'express';
 import cors from 'cors';
-import { esTituloValido, normalizarTitulo } from '../utils/validaciones.js';
+import { contarTareasPendientes, esTituloValido, normalizarTitulo } from '../utils/validaciones.js';
 import { crearRepositorio } from './repositorio.js';
 
 /**
@@ -42,6 +42,26 @@ export function crearApp(repositorio = crearRepositorio()) {
 	app.get('/tareas', async (req, res, next) => {
 		try {
 			res.status(200).json(await repositorio.listar());
+		} catch (error) {
+			next(error);
+		}
+	});
+
+	/**
+	 * Resumen de la lista: cuántas tareas hay y cuántas siguen pendientes.
+	 *
+	 * Usa la misma función que el contador de la pantalla, así la API y el
+	 * frontend nunca pueden dar números distintos para la misma lista.
+	 */
+	app.get('/tareas/resumen', async (req, res, next) => {
+		try {
+			const tareas = await repositorio.listar();
+			const pendientes = contarTareasPendientes(tareas);
+			res.status(200).json({
+				total: tareas.length,
+				pendientes,
+				completadas: tareas.length - pendientes,
+			});
 		} catch (error) {
 			next(error);
 		}
