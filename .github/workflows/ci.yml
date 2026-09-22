@@ -5,6 +5,12 @@ on:
     branches: [main]
   pull_request:
     branches: [main]
+  # Disparador manual: es la única puerta hacia producción.
+  workflow_dispatch:
+    inputs:
+      confirmacion:
+        description: 'Escribe DEPLOY para confirmar el despliegue a produccion'
+        required: true
 
 jobs:
   build:
@@ -113,3 +119,71 @@ jobs:
           name: playwright-report
           path: playwright-report/
           retention-days: 7
+
+  deploy-staging:
+    name: Deploy a Staging
+    # Los dos guardianes del despliegue:
+    #   needs  -> no se despliega si cualquier control anterior falló.
+    #   if     -> solo tras un push real a main (es decir, tras un merge),
+    #             nunca desde un Pull Request todavía abierto.
+    needs: [build, pruebas, migraciones, e2e]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # El token es una credencial real de Railway y se guarda como Secret.
+      # Mientras no exista, el job avisa y no intenta desplegar, en lugar de
+      # fallar y dejar main en rojo por una configuración pendiente.
+      - name: Comprobar que RAILWAY_TOKEN esta configurado
+        id: token
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+        run: |
+          if [ -z "$RAILWAY_TOKEN" ]; then
+            echo "configurado=false" >> "$GITHUB_OUTPUT"
+            echo "::warning::RAILWAY_TOKEN no esta configurado: se omite el despliegue a staging."
+          else
+            echo "configurado=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Instalar Railway CLI
+        if: steps.token.outputs.configurado == 'true'
+        run: npm install -g @railway/cli
+
+      - name: Desplegar a Railway (staging)
+        if: steps.token.outputs.configurado == 'true'
+        run: railway up --service backend --environment staging --ci
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+
+  deploy-produccion:
+    name: Deploy a Producción (manual)
+    # Solo se ejecuta si una persona lanzó el workflow a mano Y escribió
+    # DEPLOY. Un push a main jamás llega hasta aquí.
+    if: github.event_name == 'workflow_dispatch' && github.event.inputs.confirmacion == 'DEPLOY'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Comprobar que RAILWAY_TOKEN esta configurado
+        id: token
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+        run: |
+          if [ -z "$RAILWAY_TOKEN" ]; then
+            echo "configurado=false" >> "$GITHUB_OUTPUT"
+            echo "::warning::RAILWAY_TOKEN no esta configurado: se omite el despliegue a produccion."
+          else
+            echo "configurado=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Instalar Railway CLI
+        if: steps.token.outputs.configurado == 'true'
+        run: npm install -g @railway/cli
+
+      - name: Desplegar a Railway (produccion)
+        if: steps.token.outputs.configurado == 'true'
+        run: railway up --service backend --environment production --ci
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}

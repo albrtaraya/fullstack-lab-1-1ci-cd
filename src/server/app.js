@@ -23,10 +23,21 @@ export function crearApp(repositorio = crearRepositorio()) {
 
 	app.locals.repositorio = repositorio;
 
-	/** Sonda de salud: la usa el healthcheck del contenedor. */
-	app.get('/salud', (req, res) => {
-		res.status(200).json({ estado: 'ok', almacen: repositorio.tipo });
-	});
+	/**
+	 * Sonda de salud.
+	 *
+	 * La consultan el HEALTHCHECK del contenedor (Sesión 5) y el Healthcheck
+	 * Path de Railway (Sesión 7). Se expone en `/health` además de `/salud`
+	 * porque es la ruta que la plataforma espera por convención; si el proceso
+	 * no arranca, esta ruta deja de responder y el despliegue se marca como no
+	 * saludable.
+	 */
+	function sondaDeSalud(req, res) {
+		res.status(200).json({ estado: 'ok', status: 'ok', almacen: repositorio.tipo });
+	}
+
+	app.get('/salud', sondaDeSalud);
+	app.get('/health', sondaDeSalud);
 
 	app.get('/tareas', async (req, res, next) => {
 		try {

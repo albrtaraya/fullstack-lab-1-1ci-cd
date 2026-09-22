@@ -10,14 +10,24 @@ function repositorioRoto() {
 	return { tipo: 'postgres', inicializar: falla, listar: falla, crear: falla, cerrar: falla };
 }
 
-describe('GET /salud', () => {
-	it('responde ok e informa el almacen en uso', async () => {
+describe('Sonda de salud', () => {
+	it('GET /salud responde ok e informa el almacen en uso', async () => {
 		const app = crearApp({ tipo: 'memoria', listar: async () => [] });
 
 		const res = await request(app).get('/salud');
 
 		expect(res.status).toBe(200);
-		expect(res.body).toEqual({ estado: 'ok', almacen: 'memoria' });
+		expect(res.body).toMatchObject({ estado: 'ok', almacen: 'memoria' });
+	});
+
+	it('GET /health responde lo mismo: es la ruta que consulta Railway', async () => {
+		const app = crearApp({ tipo: 'postgres', listar: async () => [] });
+
+		const res = await request(app).get('/health');
+
+		expect(res.status).toBe(200);
+		expect(res.body.status).toBe('ok');
+		expect(res.body.almacen).toBe('postgres');
 	});
 });
 
