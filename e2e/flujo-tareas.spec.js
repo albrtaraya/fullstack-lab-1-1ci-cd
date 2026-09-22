@@ -61,3 +61,16 @@ test('el campo queda limpio despues de agregar una tarea', async ({ page }) => {
 
 	await expect(campo).toHaveValue('');
 });
+
+test('la lista vacia invita a crear la primera tarea', async ({ page }) => {
+	await page.goto('/');
+	await esperarHidratacion(page);
+
+	const invitacion = page.getByText('Todavía no hay tareas. Escribe la primera aquí arriba.');
+	await expect(invitacion).toBeVisible();
+
+	await page.getByLabel('Nueva tarea').fill('Preparar la demo');
+	await page.getByRole('button', { name: 'Agregar' }).click();
+
+	await expect(invitacion).toBeHidden();
+});

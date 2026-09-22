@@ -79,20 +79,24 @@ export default function ListaTareas() {
 			<p>
 				{pendientes} {pendientes === 1 ? 'tarea pendiente' : 'tareas pendientes'}
 			</p>
-			<ul>
-				{tareas.map((tarea, i) => (
-					<li key={tarea.id ?? `${tarea.titulo}-${i}`}>
-						<label>
-							<input
-								type="checkbox"
-								checked={tarea.completada}
-								onChange={() => alternarTarea(i)}
-							/>
-							{tarea.titulo}
-						</label>
-					</li>
-				))}
-			</ul>
+			{tareas.length === 0 ? (
+				<p>Todavía no hay tareas. Escribe la primera aquí arriba.</p>
+			) : (
+				<ul>
+					{tareas.map((tarea, i) => (
+						<li key={tarea.id ?? `${tarea.titulo}-${i}`}>
+							<label>
+								<input
+									type="checkbox"
+									checked={tarea.completada}
+									onChange={() => alternarTarea(i)}
+								/>
+								{tarea.titulo}
+							</label>
+						</li>
+					))}
+				</ul>
+			)}
 		</section>
 	);
 }
