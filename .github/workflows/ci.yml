@@ -12,6 +12,11 @@ on:
         description: 'Escribe DEPLOY para confirmar el despliegue a produccion'
         required: true
 
+env:
+  # El servicio en Railway conserva el nombre del repositorio: los jobs de
+  # despliegue lo invocan por ese nombre exacto.
+  SERVICIO_RAILWAY: fullstack-lab-1-1ci-cd
+
 jobs:
   build:
     name: Lint & Build
@@ -153,7 +158,7 @@ jobs:
 
       - name: Desplegar a Railway (staging)
         if: steps.token.outputs.configurado == 'true'
-        run: railway up --service backend --environment staging --ci
+        run: railway up --service "$SERVICIO_RAILWAY" --environment staging --ci
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
 
@@ -184,6 +189,6 @@ jobs:
 
       - name: Desplegar a Railway (produccion)
         if: steps.token.outputs.configurado == 'true'
-        run: railway up --service backend --environment production --ci
+        run: railway up --service "$SERVICIO_RAILWAY" --environment production --ci
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
