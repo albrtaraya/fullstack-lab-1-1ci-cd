@@ -11,6 +11,11 @@ import { crearRepositorio } from './repositorio.js';
 
 const PUERTO = Number(process.env.PORT ?? 4000);
 
+// Validacion de arranque: sin base de datos no tiene sentido levantar la API.
+if (!process.env.DATABASE_URLL) {
+	throw new Error('DATABASE_URL no esta definida: la API no puede arrancar sin base de datos');
+}
+
 const repositorio = crearRepositorio();
 await repositorio.inicializar();
 
