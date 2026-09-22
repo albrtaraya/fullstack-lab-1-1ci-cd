@@ -16,10 +16,6 @@ env:
   # El servicio en Railway conserva el nombre del repositorio: los jobs de
   # despliegue lo invocan por ese nombre exacto.
   SERVICIO_RAILWAY: fullstack-lab-1-1ci-cd
-  # Identificador del proyecto. No es una credencial: sin el token no da
-  # acceso a nada. Hace falta porque un token de cuenta alcanza varios
-  # proyectos y hay que decirle a cual se despliega.
-  PROYECTO_RAILWAY: d8f61c97-f8a6-44ce-ada8-e0e29ea42cd6
 
 jobs:
   build:
@@ -162,14 +158,11 @@ jobs:
 
       - name: Desplegar a Railway (staging)
         if: steps.token.outputs.configurado == 'true'
-        run: |
-          railway link --project "$PROYECTO_RAILWAY" --environment staging --service "$SERVICIO_RAILWAY"
-          railway up --ci
+        run: railway up --service "$SERVICIO_RAILWAY" --ci
         env:
-          # Railway distingue dos tipos de token: los de proyecto viajan en
-          # RAILWAY_TOKEN y los de cuenta en RAILWAY_API_TOKEN. El del
-          # diplomado es de cuenta, por eso primero se enlaza el proyecto.
-          RAILWAY_API_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+          # Token de proyecto: Railway lo ata a un solo ambiente (staging), asi
+          # que el token mismo decide a donde se despliega.
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
 
   deploy-produccion:
     name: Deploy a Producción (manual)
@@ -180,14 +173,14 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Comprobar que RAILWAY_TOKEN esta configurado
+      - name: Comprobar que RAILWAY_TOKEN_PRODUCCION esta configurado
         id: token
         env:
-          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN_PRODUCCION }}
         run: |
           if [ -z "$RAILWAY_TOKEN" ]; then
             echo "configurado=false" >> "$GITHUB_OUTPUT"
-            echo "::warning::RAILWAY_TOKEN no esta configurado: se omite el despliegue a produccion."
+            echo "::warning::RAILWAY_TOKEN_PRODUCCION no esta configurado: se omite el despliegue a produccion."
           else
             echo "configurado=true" >> "$GITHUB_OUTPUT"
           fi
@@ -198,11 +191,8 @@ jobs:
 
       - name: Desplegar a Railway (produccion)
         if: steps.token.outputs.configurado == 'true'
-        run: |
-          railway link --project "$PROYECTO_RAILWAY" --environment production --service "$SERVICIO_RAILWAY"
-          railway up --ci
+        run: railway up --service "$SERVICIO_RAILWAY" --ci
         env:
-          # Railway distingue dos tipos de token: los de proyecto viajan en
-          # RAILWAY_TOKEN y los de cuenta en RAILWAY_API_TOKEN. El del
-          # diplomado es de cuenta, por eso primero se enlaza el proyecto.
-          RAILWAY_API_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+          # Token de proyecto: Railway lo ata a un solo ambiente (production), asi
+          # que el token mismo decide a donde se despliega.
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN_PRODUCCION }}
