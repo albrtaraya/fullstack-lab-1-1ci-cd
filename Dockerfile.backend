@@ -15,6 +15,9 @@ COPY package*.json ./
 RUN npm ci --omit=dev
 
 COPY src ./src
+# Las migraciones viajan dentro de la imagen: el servidor las aplica al
+# arrancar, asi que sin esta copia el contenedor muere buscando db/migraciones.
+COPY db ./db
 
 EXPOSE 4000
 

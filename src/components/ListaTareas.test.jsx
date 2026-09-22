@@ -85,6 +85,24 @@ describe('ListaTareas', () => {
 		expect(screen.getByText('0 tareas pendientes')).toBeInTheDocument();
 	});
 
+	it('invita a crear la primera tarea cuando la lista esta vacia', () => {
+		render(<ListaTareas />);
+
+		expect(screen.getByText('Todavía no hay tareas. Escribe la primera aquí arriba.')).toBeInTheDocument();
+		expect(screen.queryByRole('list')).not.toBeInTheDocument();
+	});
+
+	it('el mensaje de lista vacia desaparece al agregar la primera tarea', async () => {
+		render(<ListaTareas />);
+		const usuario = userEvent.setup();
+
+		await usuario.type(screen.getByLabelText('Nueva tarea'), 'Preparar la demo');
+		await usuario.click(screen.getByText('Agregar'));
+
+		expect(screen.queryByText('Todavía no hay tareas. Escribe la primera aquí arriba.')).not.toBeInTheDocument();
+		expect(screen.getByRole('list')).toBeInTheDocument();
+	});
+
 	it('agrega una tarea y la muestra en la lista', async () => {
 		render(<ListaTareas />);
 		const usuario = userEvent.setup();
